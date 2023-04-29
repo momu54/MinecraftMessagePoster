@@ -153,7 +153,7 @@ def on_player_joined(server: PluginServerInterface, player: str, info: Info):
                     "name": f"{player} {LANGS[lang]['join']}",
                     "icon_url": f"https://crafatar.com/avatars/{uuid}",
                 },
-                "color": 65280,
+                "color": 9763203,
             }
         ],
     }
@@ -172,7 +172,7 @@ def on_player_left(server: PluginServerInterface, player: str):
                     "name": f"{player} {LANGS[lang]['left']}",
                     "icon_url": f"https://crafatar.com/avatars/{uuid}",
                 },
-                "color": 16711680,
+                "color": 14766657,
             }
         ],
     }
