@@ -1,0 +1,10 @@
+{
+	"id": "message_poster",
+	"version": "1.0.0",
+	"name": "MinecraftMessagePoster",
+	"description": "Message poster for MCDR",
+	"author": "momu54#8218",
+	"dependencies": {
+		"mcdreforged": ">=2.0.0-alpha.1"
+	}
+}
