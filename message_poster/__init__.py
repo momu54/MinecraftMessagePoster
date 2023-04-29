@@ -2,13 +2,17 @@ from mcdreforged.api.types import PluginServerInterface, CommandSource, PlayerCo
 from mcdreforged.api.command import SimpleCommandBuilder, Text, CommandContext
 from mcdreforged.plugin.server_interface import PluginServerInterface, ServerInterface
 from json import loads, dumps
-from os.path import isfile
+from os.path import isfile, isdir
 from mcdreforged.minecraft.rtext.style import RColor
 from requests import post, get
+from python_nbt.nbt import read_from_nbt_file
+from os import listdir
+from message_poster.utils import load_properties
 
 webhook_url: str = ''
 uuids: dict[str, str] = {}
 lang: str = 'ENUS'
+nicknames: dict[str, str] = {}
 
 ZHTW = {
     "help": "幫助",
@@ -17,7 +21,8 @@ ZHTW = {
     "left": "離開了遊戲",
     "invalid_language": "無效的語言! (ZHTW, ENUS)",
     "done": "完成!",
-    "permission_denied": "權限不足!"
+    "permission_denied": "權限不足!",
+    "nickname_update": "暱稱已更新"
 }
 
 ENUS = {
@@ -27,13 +32,17 @@ ENUS = {
     "left": "left the game",
     "invalid_language": "Invalid language! (ZHTW, ENUS)",
     "done": "Done!",
-    "permission_denied": "Permission denied!"
+    "permission_denied": "Permission denied!",
+    "nickname_update": "Nickname updated"
 }
 
 LANGS = {
     "ZHTW": ZHTW,
     "ENUS": ENUS
 }
+
+essential_commands_installed: bool = False
+world_name: str
 
 def get_help(src: CommandSource):
     if src.is_player:
@@ -53,7 +62,6 @@ def set_webhook_url(src: CommandSource, ctx: CommandContext):
     
     server = src.get_server().as_plugin_server_interface()
     configpath = server.get_data_folder()
-    server.logger.info(ctx['webhook'])
     config = {
         "webhook_url": ctx['webhook'],
         "lang": lang
@@ -96,6 +104,18 @@ def on_server_startup(server: PluginServerInterface):
 def on_load(server: ServerInterface, prev):
     server.logger.info('Message Poster loaded!')
     
+    server_root = server.get_mcdr_config()['working_directory']
+    if isdir(f"{server_root}/mods/"):
+        for mod in listdir(f"{server_root}/mods/"):
+            if "essential_commands" in mod:
+                global essential_commands_installed
+                essential_commands_installed = True
+                break
+    
+    server_properties = load_properties("./server.properties")
+    global world_name
+    world_name = server_properties['level-name']
+    
     # command
     builder = SimpleCommandBuilder()
     
@@ -120,23 +140,42 @@ def on_user_info(server: PluginServerInterface, info: Info):
     }
     post(webhook_url, json=playload)
 
-def on_player_joined(server: PluginServerInterface, player: str, info: Info):
-    if webhook_url == '': return
-    uuid = get(f"https://api.mojang.com/users/profiles/minecraft/{player}").json()['id']
-    uuids[player] = uuid
-    
-    playload = {
-        "embeds": [
-            {
-                "author": {
-                    "name": f"{player} {LANGS[lang]['join']}",
-                    "icon_url": f"https://crafatar.com/avatars/{uuid}"
-                },
-                "color": 65280
-            }
-        ],
-    }
-    post(webhook_url, json=playload)
+def on_info(server: PluginServerInterface, info: Info):
+    if "User Authenticator" in info.raw_content and info.content.startswith('UUID of player'):
+        spilted = info.content.split(' is ')
+        uuid = spilted[1]
+        nickname = spilted[0].split(' player ')[1]
+        if essential_commands_installed:
+            server_root = server.get_mcdr_config()['working_directory']
+            rawtext = read_from_nbt_file(f'{server_root}/{world_name}/modplayerdata/{uuid}.dat')._value_json_obj()['data']['value']['nickname']['value']
+            if rawtext != 'null':
+                original_name = nickname
+                nickname = loads(rawtext)['text']
+                nicknames[original_name] = nickname
+        uuids[nickname] = uuid
+        
+        if webhook_url == '': return
+        uuid = uuids[nickname]
+        
+        playload = {
+            "embeds": [
+                {
+                    "author": {
+                        "name": f"{nickname} {LANGS[lang]['join']}",
+                        "icon_url": f"https://crafatar.com/avatars/{uuid}"
+                    },
+                    "color": 65280
+                }
+            ],
+        }
+        post(webhook_url, json=playload)
+    elif "'s nickname to 'literal" in info.content:
+        spilted = info.content.split("'s nickname to 'literal{")
+        original_name = spilted[0].removeprefix('Set ')
+        nickname = spilted[1].removesuffix("}'.")
+        uuids[nickname] = uuids[nicknames[original_name]]
+        del uuids[nicknames[original_name]]
+        server.tell(original_name, f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.green.mc_code}{LANGS[lang]["nickname_update"]}')
     
 def on_player_left(server: PluginServerInterface, player: str):
     if webhook_url == '': return
