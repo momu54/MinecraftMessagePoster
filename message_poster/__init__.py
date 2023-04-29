@@ -130,15 +130,15 @@ def on_user_info(server: PluginServerInterface, info: Info):
         return
     if info.content.startswith("!!"):
         return
-    uuid = uuids[info.player]
+    uuid = uuids.get(info.player)
 
-    playload = {
+    payload = {
         "content": info.content,
-        "avatar_url": f"https://crafatar.com/avatars/{uuid}",
         "username": info.player,
     }
-    post(webhook_url, json=playload)
-
+    if uuid:
+        payload["avatar_url"] = f"https://crafatar.com/avatars/{uuid}"
+    post(webhook_url, json=payload)
 
 def on_player_joined(server: PluginServerInterface, player: str, info: Info):
     if webhook_url == "":
