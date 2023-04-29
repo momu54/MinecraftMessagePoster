@@ -163,21 +163,22 @@ def on_player_joined(server: PluginServerInterface, player: str, info: Info):
 def on_player_left(server: PluginServerInterface, player: str):
     if webhook_url == "":
         return
-    uuid = uuids[player]
+    uuid = uuids.get(player)
+    icon_url = f"https://crafatar.com/avatars/{uuid}" if uuid else ""
 
     playload = {
         "embeds": [
             {
                 "author": {
                     "name": f"{player} {LANGS[lang]['left']}",
-                    "icon_url": f"https://crafatar.com/avatars/{uuid}",
+                    "icon_url": icon_url,
                 },
                 "color": 14766657,
             }
         ],
     }
     post(webhook_url, json=playload)
-    del uuids[player]
+    uuids.pop(player, None)
 
 
 class WebhookConfig:
