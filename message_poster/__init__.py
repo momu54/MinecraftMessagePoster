@@ -1,5 +1,6 @@
 from json import dumps, loads
 from os.path import isfile
+from typing import Optional
 
 from mcdreforged.api.command import CommandContext, SimpleCommandBuilder, Text
 from mcdreforged.api.types import (CommandSource, ConsoleCommandSource, Info,
@@ -100,6 +101,14 @@ def set_language(src: CommandSource, ctx: CommandContext):
         f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.green.mc_code}{LANGS[lang]["done"]}'
     )
 
+def get_uuid(player: str) -> Optional[str]:
+    url = f"https://api.mojang.com/users/profiles/minecraft/{player}"
+    response = get(url)
+    if response.status_code == 200:
+        return loads(response.text)["id"]
+    else:
+        return None
+
 
 def on_server_startup(server: PluginServerInterface):
     configpath = f"{server.get_data_folder()}/webhook_url.json"
@@ -118,6 +127,7 @@ def on_load(server: ServerInterface, prev):
     builder.command("!!mp", get_help)
     builder.command("!!mp url <webhook>", set_webhook_url)
     builder.command("!!mp lang <lang>", set_language)
+    builder.command("!!mp uuid <player>", set_uuid)
 
     builder.arg("webhook", Text)
     builder.arg("lang", Text)
@@ -143,7 +153,9 @@ def on_user_info(server: PluginServerInterface, info: Info):
 def on_player_joined(server: PluginServerInterface, player: str, info: Info):
     if webhook_url == "":
         return
-    uuid = get(f"https://api.mojang.com/users/profiles/minecraft/{player}").json()["id"]
+    uuid = get_uuid(player)
+    if uuid is None:
+        return server.logger.error(f"Cannot get uuid of {player}")
     uuids[player] = uuid
 
     playload = {
