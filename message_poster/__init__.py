@@ -4,7 +4,7 @@ from mcdreforged.plugin.server_interface import PluginServerInterface, ServerInt
 from json import loads, dumps
 from os.path import isfile, isdir
 from mcdreforged.minecraft.rtext.style import RColor
-from requests import post, get
+from requests import post
 from python_nbt.nbt import read_from_nbt_file
 from os import listdir
 from message_poster.utils import load_properties
@@ -22,7 +22,10 @@ ZHTW = {
     "invalid_language": "無效的語言! (ZHTW, ENUS)",
     "done": "完成!",
     "permission_denied": "權限不足!",
-    "nickname_update": "暱稱已更新"
+    "nickname_update": "暱稱已更新為",
+    "nickname_remove": "已清除暱稱",
+    "nickname_used": "已使用暱稱",
+    "set_language": "設定語言"
 }
 
 ENUS = {
@@ -33,7 +36,10 @@ ENUS = {
     "invalid_language": "Invalid language! (ZHTW, ENUS)",
     "done": "Done!",
     "permission_denied": "Permission denied!",
-    "nickname_update": "Nickname updated"
+    "nickname_update": "Nickname updated to",
+    "nickname_remove": "Nickname removed",
+    "nickname_used": "Nickname used",
+    "set_language": "設定語言"
 }
 
 LANGS = {
@@ -53,6 +59,7 @@ def get_help(src: CommandSource):
     
     src.reply(f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {LANGS[lang]["help"]}:')
     src.reply(f'    {RColor.red.mc_code}!!mp url <url>{RColor.white.mc_code} {LANGS[lang]["set_webhook_url"]}')
+    src.reply(f'    {RColor.red.mc_code}!!mp lang <language (ZHTW/ENUS)>{RColor.white.mc_code} {LANGS[lang]["set_webhook_url"]}')
     src.reply(f'{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code} by {RColor.yellow.mc_code}momu54{RColor.red.mc_code}#8218')
 
 def set_webhook_url(src: CommandSource, ctx: CommandContext):
@@ -144,18 +151,19 @@ def on_info(server: PluginServerInterface, info: Info):
     if "User Authenticator" in info.raw_content and info.content.startswith('UUID of player'):
         spilted = info.content.split(' is ')
         uuid = spilted[1]
-        nickname = spilted[0].split(' player ')[1]
+        nickname = original_name = spilted[0].split(' player ')[1]
         if essential_commands_installed:
             server_root = server.get_mcdr_config()['working_directory']
-            rawtext = read_from_nbt_file(f'{server_root}/{world_name}/modplayerdata/{uuid}.dat')._value_json_obj()['data']['value']['nickname']['value']
+            try:
+                rawtext = read_from_nbt_file(f'{server_root}/{world_name}/modplayerdata/{uuid}.dat')._value_json_obj()['data']['value']['nickname']['value']
+            except:
+                rawtext = 'null'
             if rawtext != 'null':
-                original_name = nickname
                 nickname = loads(rawtext)['text']
                 nicknames[original_name] = nickname
         uuids[nickname] = uuid
         
         if webhook_url == '': return
-        uuid = uuids[nickname]
         
         playload = {
             "embeds": [
@@ -170,12 +178,25 @@ def on_info(server: PluginServerInterface, info: Info):
         }
         post(webhook_url, json=playload)
     elif "'s nickname to 'literal" in info.content:
+        server.logger.info(uuids)
+        server.logger.info(nicknames)
         spilted = info.content.split("'s nickname to 'literal{")
         original_name = spilted[0].removeprefix('Set ')
         nickname = spilted[1].removesuffix("}'.")
-        uuids[nickname] = uuids[nicknames[original_name]]
+        if original_name in nicknames.keys():
+            uuids[nickname] = uuids[nicknames[original_name]]
+            del uuids[nicknames[original_name]]
+        else:
+            uuids[nickname] = uuids[original_name]
+            del uuids[original_name]
+        nicknames[original_name] = nickname
+        server.tell(original_name, f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.green.mc_code}{LANGS[lang]["nickname_update"]} {nickname}')
+    elif info.content.startswith('Cleared ') and "'s nickname" in info.content:
+        original_name = info.content.removeprefix('Cleared ').removesuffix("'s nickname")
+        uuids[original_name] = uuids[nicknames[original_name]]
         del uuids[nicknames[original_name]]
-        server.tell(original_name, f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.green.mc_code}{LANGS[lang]["nickname_update"]}')
+        del nicknames[original_name]
+        server.tell(original_name, f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.green.mc_code}{LANGS[lang]["nickname_remove"]}')
     
 def on_player_left(server: PluginServerInterface, player: str):
     if webhook_url == '': return
