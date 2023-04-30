@@ -5,7 +5,6 @@
 	"description": "Message poster for MCDR",
 	"author": "momu54#8218",
 	"dependencies": {
-		"mcdreforged": ">=2.0.0-alpha.1",
-		"Python-NBT": ">=1.2.0"
+		"mcdreforged": ">=2.0.0-alpha.1"
 	}
 }
