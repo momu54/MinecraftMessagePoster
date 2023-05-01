@@ -54,11 +54,7 @@ world_name: str
 
 
 def get_help(src: CommandSource):
-    if src.is_player:
-        src: PlayerCommandSource = src
-    elif src.is_console:
-        src: ConsoleCommandSource = src
-    else:
+    if not src.is_player and not src.is_console:
         return
 
     src.reply(
