@@ -178,12 +178,10 @@ def on_user_info(_: PluginServerInterface, info: Info):
     ):
         return
     uuid = uuids.get(info.player)
-    if not uuid:
-        return
 
     playload = {
         "content": info.content,
-        "avatar_url": f"https://crafatar.com/avatars/{uuid}",
+        "avatar_url": f"https://crafatar.com/avatars/{uuid}" if uuid else None,
         "username": info.player,
     }
     post(webhook_url, json=playload)
@@ -258,15 +256,13 @@ def on_player_left(_: PluginServerInterface, player: str):
     if webhook_url == "":
         return
     uuid = uuids.get(player)
-    if not uuid:
-        return
 
     playload = {
         "embeds": [
             {
                 "author": {
                     "name": f"{player} {LANGS[lang]['left']}",
-                    "icon_url": f"https://crafatar.com/avatars/{uuid}",
+                    "icon_url": f"https://crafatar.com/avatars/{uuid}" if uuid else "",
                 },
                 "color": 16711680,
             }
