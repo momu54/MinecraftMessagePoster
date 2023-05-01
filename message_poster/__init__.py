@@ -89,7 +89,7 @@ def set_webhook_url(src: CommandSource, ctx: CommandContext):
             f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.red.mc_code}{LANGS[lang]["error"]} {RColor.yellow.mc_code}server is None{RColor.red.mc_code}!'
         )
         return
-    
+
     configpath = server.get_data_folder()
     config = {"webhook_url": ctx["webhook"], "lang": lang}
     global webhook_url
@@ -121,7 +121,7 @@ def set_language(src: CommandSource, ctx: CommandContext):
             f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.red.mc_code}{LANGS[lang]["error"]} {RColor.yellow.mc_code}server is None{RColor.red.mc_code}!'
         )
         return
-    
+
     configpath = server.get_data_folder()
     config = {"webhook_url": webhook_url, "lang": ctx["lang"]}
     lang = ctx["lang"]
@@ -170,11 +170,16 @@ def on_load(server: ServerInterface, _):
 
 
 def on_user_info(_: PluginServerInterface, info: Info):
-    if webhook_url == "":
+    if (
+        not webhook_url
+        or not info.content
+        or not info.player
+        or info.content.startswith("!!")
+    ):
         return
-    if info.content.startswith("!!"):
+    uuid = uuids.get(info.player)
+    if not uuid:
         return
-    uuid = uuids[info.player]
 
     playload = {
         "content": info.content,
