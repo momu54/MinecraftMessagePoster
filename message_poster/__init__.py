@@ -6,8 +6,7 @@ from mcdreforged.api.command import CommandContext, SimpleCommandBuilder, Text
 from mcdreforged.api.types import (CommandSource, ConsoleCommandSource, Info,
                                    PlayerCommandSource, PluginServerInterface)
 from mcdreforged.minecraft.rtext.style import RColor
-from mcdreforged.plugin.server_interface import (PluginServerInterface,
-                                                 ServerInterface)
+from mcdreforged.plugin.server_interface import PluginServerInterface
 from python_nbt.nbt import read_from_nbt_file
 from requests import post
 
@@ -141,7 +140,7 @@ def on_server_startup(server: PluginServerInterface):
     lang = config.lang
 
 
-def on_load(server: ServerInterface, _):
+def on_load(server: PluginServerInterface, _):
     server.logger.info("Message Poster loaded!")
 
     server_root = server.get_mcdr_config()["working_directory"]
