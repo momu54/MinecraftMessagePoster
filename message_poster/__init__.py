@@ -141,7 +141,7 @@ def on_server_startup(server: PluginServerInterface):
     lang = config.lang
 
 
-def on_load(server: ServerInterface, prev):
+def on_load(server: ServerInterface, _):
     server.logger.info("Message Poster loaded!")
 
     server_root = server.get_mcdr_config()["working_directory"]
@@ -169,7 +169,7 @@ def on_load(server: ServerInterface, prev):
     builder.register(server)
 
 
-def on_user_info(server: PluginServerInterface, info: Info):
+def on_user_info(_: PluginServerInterface, info: Info):
     if webhook_url == "":
         return
     if info.content.startswith("!!"):
@@ -249,7 +249,7 @@ def on_info(server: PluginServerInterface, info: Info):
         )
 
 
-def on_player_left(server: PluginServerInterface, player: str):
+def on_player_left(_: PluginServerInterface, player: str):
     if webhook_url == "":
         return
     uuid = uuids[player]
