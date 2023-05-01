@@ -30,6 +30,7 @@ ZHTW = {
     "nickname_remove": "已清除暱稱",
     "nickname_used": "已使用暱稱",
     "set_language": "設定語言",
+    "error": "錯誤",
 }
 
 ENUS = {
@@ -44,6 +45,7 @@ ENUS = {
     "nickname_remove": "Nickname removed",
     "nickname_used": "Nickname used",
     "set_language": "Set language",
+    "error": "ERROR",
 }
 
 LANGS = {"ZHTW": ZHTW, "ENUS": ENUS}
@@ -82,6 +84,12 @@ def set_webhook_url(src: CommandSource, ctx: CommandContext):
         return
 
     server = src.get_server().as_plugin_server_interface()
+    if server is None:
+        src.reply(
+            f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.red.mc_code}{LANGS[lang]["error"]} {RColor.yellow.mc_code}server is None{RColor.red.mc_code}!'
+        )
+        return
+    
     configpath = server.get_data_folder()
     config = {"webhook_url": ctx["webhook"], "lang": lang}
     global webhook_url
@@ -108,6 +116,12 @@ def set_language(src: CommandSource, ctx: CommandContext):
         return
 
     server = src.get_server().as_plugin_server_interface()
+    if server is None:
+        src.reply(
+            f'[{RColor.aqua.mc_code}Message Poster{RColor.white.mc_code}] {RColor.red.mc_code}{LANGS[lang]["error"]} {RColor.yellow.mc_code}server is None{RColor.red.mc_code}!'
+        )
+        return
+    
     configpath = server.get_data_folder()
     config = {"webhook_url": webhook_url, "lang": ctx["lang"]}
     lang = ctx["lang"]
