@@ -190,6 +190,9 @@ def on_user_info(_: PluginServerInterface, info: Info):
 
 
 def on_info(server: PluginServerInterface, info: Info):
+    if not webhook_url or not info.content or info.content.startswith("!!"):
+        return
+
     if "User Authenticator" in info.raw_content and info.content.startswith(
         "UUID of player"
     ):
@@ -208,9 +211,6 @@ def on_info(server: PluginServerInterface, info: Info):
                 nickname = loads(rawtext)["text"]
                 nicknames[original_name] = nickname
         uuids[nickname] = uuid
-
-        if webhook_url == "":
-            return
 
         playload = {
             "embeds": [
