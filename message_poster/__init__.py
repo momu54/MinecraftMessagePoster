@@ -176,7 +176,7 @@ def on_user_info(_: PluginServerInterface, info: Info):
 
     playload = {
         "content": info.content,
-        "avatar_url": f"https://crafatar.com/avatars/{uuid}" if uuid else None,
+        "avatar_url": f"https://crafatar.com/avatars/{uuid}" if uuid else "",
         "username": info.player,
     }
     post(webhook_url, json=playload)
