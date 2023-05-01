@@ -43,7 +43,7 @@ ENUS = {
     "nickname_update": "Nickname updated to",
     "nickname_remove": "Nickname removed",
     "nickname_used": "Nickname used",
-    "set_language": "設定語言",
+    "set_language": "Set language",
 }
 
 LANGS = {"ZHTW": ZHTW, "ENUS": ENUS}
