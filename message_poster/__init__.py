@@ -257,7 +257,9 @@ def on_info(server: PluginServerInterface, info: Info):
 def on_player_left(_: PluginServerInterface, player: str):
     if webhook_url == "":
         return
-    uuid = uuids[player]
+    uuid = uuids.get(player)
+    if not uuid:
+        return
 
     playload = {
         "embeds": [
@@ -271,7 +273,7 @@ def on_player_left(_: PluginServerInterface, player: str):
         ],
     }
     post(webhook_url, json=playload)
-    del uuids[player]
+    uuids.pop(player, None)
 
 
 class WebhookConfig:
